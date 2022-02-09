@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/types/*": [
+        "artifacts/types/*"
+      ],
+    },
+    "target": "es2018",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "declaration": true
+  },
+  "include": ["./scripts", "./test", "./typechain", "src/deploy-nfts.ts"],
+  "files": ["./hardhat.config.ts"]
+}
