@@ -15,7 +15,13 @@ if (!PINATA_API_SECRET || !PINATA_API_KEY) {
 }
 const pinata = pinataSDK(PINATA_API_KEY, PINATA_API_SECRET);
 
-const makeNfts = (cid: string) => galleryPieces.map(piece => {
+const NETWORK_NAMES: Record<string, string> = {
+	matic_testnet: "Matic Testnet",
+	ropsten: "Ropsten",
+	hardhat: "Hardhat",
+}
+
+const makeNfts = (cid: string, network: string) => galleryPieces.map(piece => {
 	const {
 		src,
 		title: name,
@@ -27,15 +33,17 @@ const makeNfts = (cid: string) => galleryPieces.map(piece => {
 	const filename = pathParts[pathParts.length - 1];
 	const path = src.replace(filename, "");
 
+	const networkName = NETWORK_NAMES[network] || `${network.slice(0, 1).toUpperCase()}${network.slice(1)}`;
+
 	return {
 		path,
 		filename,
 		metadata: {
 			name,
-			description: `${name} by ${artist}, using ${media}`,
+			description: `${name} by ${artist}, using ${media}.  This is the initial release of this NFT on ${networkName}.  Released under the NFTL 1.0 license.`,
 			attributes: "",
 			image: `https://ipfs.infura.io/ipfs/${cid}${src}`,
-			external_url: "https://artful.one/",
+			external_url: "https://artful.one/gallery",
 		},
 	} as Nft;
 });
@@ -52,7 +60,7 @@ async function uploadAndPinNFTDirectory(directory: string, name:string) {
 		});
 }
 
-export async function deployNFTGallery(directory: string, name: string) {
+export async function deployNFTGallery(directory: string, name: string, network: string) {
 	let imageCid = '';
 	const slug = slugify(name);
 	return uploadAndPinNFTDirectory(directory, name)
@@ -60,11 +68,11 @@ export async function deployNFTGallery(directory: string, name: string) {
 			console.log('Image Directory Pinned!', results);
 			const { IpfsHash } = results;
 			imageCid = IpfsHash;
-			const nfts = makeNfts(IpfsHash);
+			const nfts = makeNfts(IpfsHash, network);
 			return Promise.all(nfts.map(nft => fs.writeFile(`./metadata/${nft.filename}.json`, JSON.stringify(nft.metadata, null, 2))));
 		})
 		.then(() => {
-			return uploadAndPinNFTDirectory('metadata', 'Artful One OG NFT Collection - Metadata');
+			return uploadAndPinNFTDirectory('metadata', `${name} (NFT ${network})`);
 		})
 		.then(results => {
 			console.log('Image Metadata', results);

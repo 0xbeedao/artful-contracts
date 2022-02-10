@@ -16,8 +16,6 @@ dotenv.config();
 
 const PK = process.env.DEV_WALLET = process.env.DEV_WALLET || '0x0';
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
 
@@ -43,42 +41,42 @@ task("balance", "Prints an account's balance")
  });
 
 task("deploy", "Deploys the contract")
+  .addParam("cid", "The CID of the metadata directory")
   .setAction(async(taskArgs, hre) => {
-
-  const contractCID = 'bafybeiazjlqz2z7lx2lluhreuujgxv3hou7z2gowcn4omypja6w4zjl5bi';
-  const [deployer] = await hre.ethers.getSigners();
-  if (!deployer) {
-    console.error(`No account to deploy with.`);
-    return;
-  }
-  const contract = await hre.ethers.getContractFactory("BeeMinter");
-  const deployed = await contract.deploy("ArtfulOne", "BEE", contractCID);
-  console.log(`BeeMinter deployed to: ${deployed.address} from ${deployer.address}`);
-  const outDir = `deployments/${hre.network.name}`;
-  return fs
-    .mkdir(outDir)
-    .then(() => fs
-    .writeFile(
-      `deployments/${hre.network.name}/beeminter.json`, 
-      JSON.stringify({
-        tx: deployed.deployTransaction.hash,
-        address: deployed.address,
-        deployer: deployer.address,
-        timestamp: new Date().toISOString(),
-      }, null, 2)
-    ));
-});
+    const { cid } = taskArgs;
+    const [deployer] = await hre.ethers.getSigners();
+    if (!deployer) {
+      console.error(`No account to deploy with.`);
+      return;
+    }
+    const contract = await hre.ethers.getContractFactory("BeeMinter");
+    const deployed = await contract.deploy("ArtfulOne", "BEE", cid);
+    console.log(`BeeMinter deployed to: ${deployed.address} from ${deployer.address}`);
+    const outDir = `deployments/${hre.network.name}`;
+    return fs
+      .mkdir(outDir)
+      .then(() => fs
+      .writeFile(
+        `deployments/${hre.network.name}/beeminter.json`, 
+        JSON.stringify({
+          tx: deployed.deployTransaction.hash,
+          address: deployed.address,
+          deployer: deployer.address,
+          timestamp: new Date().toISOString(),
+        }, null, 2)
+      ));
+  });
 
 task("ipfs-upload")
 .setAction(async(taskArgs, hre) => {
-  return deployNFTGallery('art', 'Artful One OG NFT Collection')
+  return deployNFTGallery('art', 'Artful One OG NFT Collection', hre.network.name)
     .then(results => {
       console.log(results);
       return results;
     });
 });
 
-task("mint-gallery", "batch mints gallery")
+task("mint-gallery", "batch mint gallery")
 .addParam("contract", "The contract address")
 .addParam("cid", "The cid of the gallery")
 .setAction(async(taskArgs, hre) => {
@@ -90,11 +88,11 @@ task("mint-gallery", "batch mints gallery")
   }
 
   const filenames = [
+    'bee-line-a60.jpg.json',
     'bee-fancy-wing-0001-scientific-010.jpg.json',
     'bee-gold-animation.gif.json',
     'bee-line-f40.jpg.json',
     'bee-s-e120.jpg.json',
-    'bee-line-a60.jpg.json',
     'eye-swarm.jpg.json',
     'magic-cat-ink.gif.json',
     'small-red-bee.jpg.json',
