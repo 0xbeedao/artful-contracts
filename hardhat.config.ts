@@ -7,12 +7,20 @@ import "solidity-coverage";
 import { promises as fs } from "fs";
 
 import * as dotenv from "dotenv";
+import { Contract } from "ethers";
 import { HardhatUserConfig, task } from "hardhat/config";
 
 import { BeeMinter__factory } from './artifacts/types'
 import { deployNFTGallery } from "./src/nfts";
 
 dotenv.config();
+
+const NETWORK_NAMES: Record<string, string> = {
+	matic_testnet: "Polygon Testnet",
+  matic: "Polygon",
+	ropsten: "Ropsten",
+	hardhat: "Hardhat",
+}
 
 const PK = process.env.DEV_WALLET = process.env.DEV_WALLET || '0x0';
 
@@ -41,26 +49,60 @@ task("balance", "Prints an account's balance")
  });
 
 task("deploy", "Deploys the contract")
+  .addParam("name", "The contract to deploy [beeminter, dealer]")
   .addParam("cid", "The CID of the metadata directory")
+  .addParam("price", "The price of the contract")
   .setAction(async(taskArgs, hre) => {
-    const { cid } = taskArgs;
+    const { cid, name, price } = taskArgs;
     const [deployer] = await hre.ethers.getSigners();
     if (!deployer) {
       console.error(`No account to deploy with.`);
       return;
     }
-    const contract = await hre.ethers.getContractFactory("BeeMinter");
-    const deployed = await contract.deploy("ArtfulOne", "BEE", cid);
-    console.log(`BeeMinter deployed to: ${deployed.address} from ${deployer.address}`);
+
+    let deployed: Contract | null = null;
+
+    switch (name) {
+      case "beeminter": {
+        const minter = await hre.ethers.getContractFactory("BeeMinter");
+        deployed = await minter.deploy("ArtfulOne", "BEE", cid);
+      }
+      case "dealer": {
+        if (price === undefined) {
+          throw new Error("Need a price for the dealer");
+        }
+        const bigPrice = hre.ethers.utils.parseEther(price);
+        const network = hre.network.name;
+        const networkName = NETWORK_NAMES[network] || `${network.slice(0, 1).toUpperCase()}${network.slice(1)}`;
+        const dealer = await hre.ethers.getContractFactory("TarotNFTDeck");
+        deployed = await dealer.deploy(cid, bigPrice,`Rider-Waite-Smith Deck - OG Release on ${networkName}`, "RWS");
+      }
+      default: {
+        console.error(`Unknown contract name: ${name}`);
+      }
+    }
+
+    if (!deployed) {
+      console.error(`Failed to deploy contract.`);
+      return;
+    }
+    console.log(`${name} deployed to: ${deployed.address} from ${deployer.address}`);
     const outDir = `deployments/${hre.network.name}`;
     return fs
-      .mkdir(outDir)
-      .then(() => fs
+      .stat(outDir)
+			.then((stats) => {
+				if (!stats.isDirectory()) {
+					return fs.mkdir(outDir);
+				} else {
+					return Promise.resolve();
+				}
+			})
+			.then(() => fs
       .writeFile(
-        `deployments/${hre.network.name}/beeminter.json`, 
+        `${outDir}/${name}.json`, 
         JSON.stringify({
-          tx: deployed.deployTransaction.hash,
-          address: deployed.address,
+          tx: deployed?.deployTransaction.hash,
+          address: deployed?.address,
           deployer: deployer.address,
           timestamp: new Date().toISOString(),
         }, null, 2)
@@ -156,8 +198,11 @@ const config: HardhatUserConfig = {
     'matic_testnet': {
   		url: "https://matic-mumbai.chainstacklabs.com",
 			accounts: [PK],
-			// gasPrice: 8000000000
-		}
+		},
+    'matic': {
+      url: "https://polygon-rpc.com/",
+			accounts: [process.env.NFT_DEPLOYER_WALLET || ""],
+    }
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,

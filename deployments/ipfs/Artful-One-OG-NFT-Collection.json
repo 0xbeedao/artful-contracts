@@ -1,7 +1,10 @@
 {
   "name": "Artful One OG NFT Collection",
   "imageCid": "bafybeiaqjcc6qrnvnwxsnc3m5uotquyk6wkzzowuvxa52frhijixeloqbe",
-  "metadataCid": "bafybeif26ij5w57tfwg2g5taia25fm7xuvoxcsl4em66kultw7wo62js3i",
+  "metadataCid": {
+    "matic": "bafybeihmsjacnlmffd7763qy4bbwhqnsam3grwmtbf5c5v2amxmelw6wrq",
+    "matic_testnet": "bafybeif26ij5w57tfwg2g5taia25fm7xuvoxcsl4em66kultw7wo62js3i"
+  },
   "pieces": [
     {
       "src": "/art/bee-s-e120.jpg",

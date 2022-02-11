@@ -16,7 +16,7 @@ if (!PINATA_API_SECRET || !PINATA_API_KEY) {
 const pinata = pinataSDK(PINATA_API_KEY, PINATA_API_SECRET);
 
 const NETWORK_NAMES: Record<string, string> = {
-	matic_testnet: "Matic Testnet",
+	matic_testnet: "Polygon Testnet",
 	ropsten: "Ropsten",
 	hardhat: "Hardhat",
 }
