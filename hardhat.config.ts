@@ -66,6 +66,7 @@ task("deploy", "Deploys the contract")
       case "beeminter": {
         const minter = await hre.ethers.getContractFactory("BeeMinter");
         deployed = await minter.deploy("ArtfulOne", "BEE", cid);
+        break;
       }
       case "dealer": {
         if (price === undefined) {
@@ -76,6 +77,7 @@ task("deploy", "Deploys the contract")
         const networkName = NETWORK_NAMES[network] || `${network.slice(0, 1).toUpperCase()}${network.slice(1)}`;
         const dealer = await hre.ethers.getContractFactory("TarotNFTDeck");
         deployed = await dealer.deploy(cid, bigPrice,`Rider-Waite-Smith Deck - OG Release on ${networkName}`, "RWS");
+        break;
       }
       default: {
         console.error(`Unknown contract name: ${name}`);
