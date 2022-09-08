@@ -10,88 +10,101 @@ import * as dotenv from "dotenv";
 import { Contract } from "ethers";
 import { HardhatUserConfig, task } from "hardhat/config";
 
-import { BeeMinter__factory } from './artifacts/types'
+// import { BeeMinter__factory } from './artifacts/types'
 import { deployNFTGallery } from "./src/nfts";
 
 dotenv.config();
 
 const NETWORK_NAMES: Record<string, string> = {
 	matic_testnet: "Polygon Testnet",
-  matic: "Polygon",
+	matic: "Polygon",
 	ropsten: "Ropsten",
 	hardhat: "Hardhat",
-}
+};
 
-const PK = process.env.DEV_WALLET = process.env.DEV_WALLET || '0x0';
+const PK = (process.env.DEV_WALLET = process.env.DEV_WALLET || "0x0");
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
+	const accounts = await hre.ethers.getSigners();
 
-  for (const account of accounts) {
-    console.log(account.address);
-  }
+	for (const account of accounts) {
+		console.log(account.address);
+	}
 });
 
 task("balance", "Prints an account's balance")
-.addParam("account", "The account's address or index")
-.setAction(async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
-  let account = accounts[0];
-  if (taskArgs.account) {
-    if (accounts[taskArgs.account]) {
-      account = accounts[taskArgs.account];
-    } else if (parseInt(taskArgs.account) > 100) {
-      account = taskArgs.account;
-    }
-  }
-  const balance = await account.getBalance();
-  console.log(`Account: ${account.address} balance:  ${hre.ethers.utils.formatEther(balance)}`);
- });
+	.addParam("account", "The account's address or index")
+	.setAction(async (taskArgs, hre) => {
+		const accounts = await hre.ethers.getSigners();
+		let account = accounts[0];
+		if (taskArgs.account) {
+			if (accounts[taskArgs.account]) {
+				account = accounts[taskArgs.account];
+			} else if (parseInt(taskArgs.account) > 100) {
+				account = taskArgs.account;
+			}
+		}
+		const balance = await account.getBalance();
+		console.log(
+			`Account: ${account.address} balance:  ${hre.ethers.utils.formatEther(
+				balance
+			)}`
+		);
+	});
 
 task("deploy", "Deploys the contract")
-  .addParam("name", "The contract to deploy [beeminter, dealer]")
-  .addParam("cid", "The CID of the metadata directory")
-  .addParam("price", "The price of the contract")
-  .setAction(async(taskArgs, hre) => {
-    const { cid, name, price } = taskArgs;
-    const [deployer] = await hre.ethers.getSigners();
-    if (!deployer) {
-      console.error(`No account to deploy with.`);
-      return;
-    }
+	.addParam("name", "The contract to deploy [beeminter, dealer]")
+	.addParam("cid", "The CID of the metadata directory")
+	.addParam("price", "The price of the contract")
+	.setAction(async (taskArgs, hre) => {
+		const { cid, name, price } = taskArgs;
+		const [deployer] = await hre.ethers.getSigners();
+		if (!deployer) {
+			console.error(`No account to deploy with.`);
+			return;
+		}
 
-    let deployed: Contract | null = null;
+		let deployed: Contract | null = null;
 
-    switch (name) {
-      case "beeminter": {
-        const minter = await hre.ethers.getContractFactory("BeeMinter");
-        deployed = await minter.deploy("ArtfulOne", "BEE", cid);
-        break;
-      }
-      case "dealer": {
-        if (price === undefined) {
-          throw new Error("Need a price for the dealer");
-        }
-        const bigPrice = hre.ethers.utils.parseEther(price);
-        const network = hre.network.name;
-        const networkName = NETWORK_NAMES[network] || `${network.slice(0, 1).toUpperCase()}${network.slice(1)}`;
-        const dealer = await hre.ethers.getContractFactory("TarotNFTDeck");
-        deployed = await dealer.deploy(cid, bigPrice,`Rider-Waite-Smith Deck - OG Release on ${networkName}`, "RWS");
-        break;
-      }
-      default: {
-        console.error(`Unknown contract name: ${name}`);
-      }
-    }
+		switch (name) {
+			case "beeminter": {
+				const minter = await hre.ethers.getContractFactory("BeeMinter");
+				deployed = await minter.deploy("ArtfulOne", "BEE", cid);
+				break;
+			}
+			case "dealer": {
+				if (price === undefined) {
+					throw new Error("Need a price for the dealer");
+				}
+				const bigPrice = hre.ethers.utils.parseEther(price);
+				const network = hre.network.name;
+				const networkName =
+					NETWORK_NAMES[network] ||
+					`${network.slice(0, 1).toUpperCase()}${network.slice(1)}`;
+				const dealer = await hre.ethers.getContractFactory("TarotNFTDeck");
+				deployed = await dealer.deploy(
+					cid,
+					bigPrice,
+					`Rider-Waite-Smith Deck - OG Release on ${networkName}`,
+					"RWS"
+				);
+				break;
+			}
+			default: {
+				console.error(`Unknown contract name: ${name}`);
+			}
+		}
 
-    if (!deployed) {
-      console.error(`Failed to deploy contract.`);
-      return;
-    }
-    console.log(`${name} deployed to: ${deployed.address} from ${deployer.address}`);
-    const outDir = `deployments/${hre.network.name}`;
-    return fs
-      .stat(outDir)
+		if (!deployed) {
+			console.error(`Failed to deploy contract.`);
+			return;
+		}
+		console.log(
+			`${name} deployed to: ${deployed.address} from ${deployer.address}`
+		);
+		const outDir = `deployments/${hre.network.name}`;
+		return fs
+			.stat(outDir)
 			.then((stats) => {
 				if (!stats.isDirectory()) {
 					return fs.mkdir(outDir);
@@ -99,27 +112,35 @@ task("deploy", "Deploys the contract")
 					return Promise.resolve();
 				}
 			})
-			.then(() => fs
-      .writeFile(
-        `${outDir}/${name}.json`, 
-        JSON.stringify({
-          tx: deployed?.deployTransaction.hash,
-          address: deployed?.address,
-          deployer: deployer.address,
-          timestamp: new Date().toISOString(),
-        }, null, 2)
-      ));
-  });
+			.then(() =>
+				fs.writeFile(
+					`${outDir}/${name}.json`,
+					JSON.stringify(
+						{
+							tx: deployed?.deployTransaction.hash,
+							address: deployed?.address,
+							deployer: deployer.address,
+							timestamp: new Date().toISOString(),
+						},
+						null,
+						2
+					)
+				)
+			);
+	});
 
-task("ipfs-upload")
-.setAction(async(taskArgs, hre) => {
-  return deployNFTGallery('art', 'Artful One OG NFT Collection', hre.network.name)
-    .then(results => {
-      console.log(results);
-      return results;
-    });
+task("ipfs-upload").setAction(async (taskArgs, hre) => {
+	return deployNFTGallery(
+		"art",
+		"Artful One OG NFT Collection",
+		hre.network.name
+	).then((results) => {
+		console.log(results);
+		return results;
+	});
 });
 
+/*
 task("mint-gallery", "batch mint gallery")
 .addParam("contract", "The contract address")
 .addParam("cid", "The cid of the gallery")
@@ -187,35 +208,37 @@ task("token-uri", "Gets URI by token ID")
   console.log(`Token URI: ${tokenURI}`);
 });
 
+*/
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.11",
-  networks: {
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts: [PK],
-    },
-    'matic_testnet': {
-  		url: "https://matic-mumbai.chainstacklabs.com",
+	solidity: "0.8.11",
+	networks: {
+		ropsten: {
+			url: process.env.ROPSTEN_URL || "",
 			accounts: [PK],
 		},
-    'matic': {
-      url: "https://polygon-rpc.com/",
+		matic_testnet: {
+			url: "https://matic-mumbai.chainstacklabs.com",
+			accounts: [PK],
+		},
+		matic: {
+			url: "https://polygon-rpc.com/",
 			accounts: [process.env.NFT_DEPLOYER_WALLET || ""],
-    }
-  },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: "USD",
-  },
-  etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY,
-  },
-  typechain: {
-    outDir: "./artifacts/types",
-  }
+		},
+	},
+	gasReporter: {
+		enabled: process.env.REPORT_GAS !== undefined,
+		currency: "USD",
+	},
+	etherscan: {
+		apiKey: process.env.POLYGONSCAN_API_KEY,
+	},
+	typechain: {
+		outDir: "./artifacts/types",
+	},
 };
 
 export default config;
