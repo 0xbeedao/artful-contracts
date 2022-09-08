@@ -10,7 +10,7 @@ import * as dotenv from "dotenv";
 import { Contract } from "ethers";
 import { HardhatUserConfig, task } from "hardhat/config";
 
-// import { BeeMinter__factory } from './artifacts/types'
+import { BeeMinter__factory } from "./artifacts/types";
 import { deployNFTGallery } from "./src/nfts";
 
 dotenv.config();
@@ -140,75 +140,86 @@ task("ipfs-upload").setAction(async (taskArgs, hre) => {
 	});
 });
 
-/*
 task("mint-gallery", "batch mint gallery")
-.addParam("contract", "The contract address")
-.addParam("cid", "The cid of the gallery")
-.setAction(async(taskArgs, hre) => {
-  const { contract, cid } = taskArgs;
-  const [deployer] = await hre.ethers.getSigners();
-  if (!deployer) {
-    console.error(`No account to deploy with.`);
-    return;
-  }
+	.addParam("contract", "The contract address")
+	.addParam("cid", "The cid of the gallery")
+	.setAction(async (taskArgs, hre) => {
+		const { contract, cid } = taskArgs;
+		const [deployer] = await hre.ethers.getSigners();
+		if (!deployer) {
+			console.error(`No account to deploy with.`);
+			return;
+		}
 
-  const filenames = [
-    'bee-line-a60.jpg.json',
-    'bee-fancy-wing-0001-scientific-010.jpg.json',
-    'bee-gold-animation.gif.json',
-    'bee-line-f40.jpg.json',
-    'bee-s-e120.jpg.json',
-    'eye-swarm.jpg.json',
-    'magic-cat-ink.gif.json',
-    'small-red-bee.jpg.json',
-  ];
+		const filenames = [
+			"bee-line-a60.jpg.json",
+			"bee-fancy-wing-0001-scientific-010.jpg.json",
+			"bee-gold-animation.gif.json",
+			"bee-line-f40.jpg.json",
+			"bee-s-e120.jpg.json",
+			"eye-swarm.jpg.json",
+			"magic-cat-ink.gif.json",
+			"small-red-bee.jpg.json",
+		];
 
-  const tokenURIs = filenames.map(fn => `ipfs://${cid}/metadata/${fn}`);
-  const recipients = filenames.map(() => deployer.address);
+		const tokenURIs = filenames.map((fn) => `ipfs://${cid}/metadata/${fn}`);
+		const recipients = filenames.map(() => deployer.address);
 
-  const contractInstance = new hre.ethers.Contract(contract, BeeMinter__factory.abi, deployer);
-  const minter = contractInstance.connect(deployer);
-  console.log(`Minting ${tokenURIs.length} tokens to ${recipients.length} recipients.`);
-  const pendingTx = await minter.mintBatchWithURI(recipients, tokenURIs);
-  console.log(`Pending transaction: ${pendingTx.hash}`);
-  await pendingTx.wait();
-  console.log('Minting complete.');
-});
+		const contractInstance = new hre.ethers.Contract(
+			contract,
+			BeeMinter__factory.abi,
+			deployer
+		);
+		const minter = contractInstance.connect(deployer);
+		console.log(
+			`Minting ${tokenURIs.length} tokens to ${recipients.length} recipients.`
+		);
+		const pendingTx = await minter.mintBatchWithURI(recipients, tokenURIs);
+		console.log(`Pending transaction: ${pendingTx.hash}`);
+		await pendingTx.wait();
+		console.log("Minting complete.");
+	});
 
 task("set-token-uri", "Sets URI by token ID")
-.addParam("contract", "The contract address")
-.addParam("token", "The token ID")
-.addParam("uri", "The URI")
-.setAction(async(taskArgs, hre) => {
-  const { contract, token, uri } = taskArgs;
-  const [deployer] = await hre.ethers.getSigners();
-  if (!deployer) {
-    console.error(`No account to deploy with.`);
-    return;
-  }
-  const contractInstance = new hre.ethers.Contract(contract, BeeMinter__factory.abi, deployer);
-  const pendingTx = await contractInstance.setTokenURI(token, uri);
-  console.log(`Pending transaction: ${pendingTx.hash}`);
-  await pendingTx.wait();
-  console.log('Update complete.');
-});
+	.addParam("contract", "The contract address")
+	.addParam("token", "The token ID")
+	.addParam("uri", "The URI")
+	.setAction(async (taskArgs, hre) => {
+		const { contract, token, uri } = taskArgs;
+		const [deployer] = await hre.ethers.getSigners();
+		if (!deployer) {
+			console.error(`No account to deploy with.`);
+			return;
+		}
+		const contractInstance = new hre.ethers.Contract(
+			contract,
+			BeeMinter__factory.abi,
+			deployer
+		);
+		const pendingTx = await contractInstance.setTokenURI(token, uri);
+		console.log(`Pending transaction: ${pendingTx.hash}`);
+		await pendingTx.wait();
+		console.log("Update complete.");
+	});
 
 task("token-uri", "Gets URI by token ID")
-.addParam("contract", "The contract address")
-.addParam("token", "The token ID")
-.setAction(async(taskArgs, hre) => {
-  const { contract, token } = taskArgs;
-  const [deployer] = await hre.ethers.getSigners();
-  if (!deployer) {
-    console.error(`No account to deploy with.`);
-    return;
-  }
-  const contractInstance = new hre.ethers.Contract(contract, BeeMinter__factory.abi, deployer);
-  const tokenURI = await contractInstance.tokenURI(token);
-  console.log(`Token URI: ${tokenURI}`);
-});
-
-*/
+	.addParam("contract", "The contract address")
+	.addParam("token", "The token ID")
+	.setAction(async (taskArgs, hre) => {
+		const { contract, token } = taskArgs;
+		const [deployer] = await hre.ethers.getSigners();
+		if (!deployer) {
+			console.error(`No account to deploy with.`);
+			return;
+		}
+		const contractInstance = new hre.ethers.Contract(
+			contract,
+			BeeMinter__factory.abi,
+			deployer
+		);
+		const tokenURI = await contractInstance.tokenURI(token);
+		console.log(`Token URI: ${tokenURI}`);
+	});
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
