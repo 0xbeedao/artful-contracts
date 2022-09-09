@@ -10,7 +10,7 @@ import * as dotenv from "dotenv";
 import { Contract } from "ethers";
 import { HardhatUserConfig, task } from "hardhat/config";
 
-import { BeeMinter__factory } from "./artifacts/types";
+// import { BeeMinter__factory } from "./artifacts/types";
 import { deployNFTGallery } from "./src/nfts";
 
 dotenv.config();
@@ -140,6 +140,7 @@ task("ipfs-upload").setAction(async (taskArgs, hre) => {
 	});
 });
 
+/*
 task("mint-gallery", "batch mint gallery")
 	.addParam("contract", "The contract address")
 	.addParam("cid", "The cid of the gallery")
@@ -220,6 +221,7 @@ task("token-uri", "Gets URI by token ID")
 		const tokenURI = await contractInstance.tokenURI(token);
 		console.log(`Token URI: ${tokenURI}`);
 	});
+	*/
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
