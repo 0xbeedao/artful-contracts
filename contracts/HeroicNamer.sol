@@ -678,6 +678,15 @@ contract HeroicNamer is ERC721Enumerable, Ownable, PseudoRandomized {
 		return buildMetadata(_tokenId);
 	}
 
+	function nameOfOwnerByIndex(address _owner, uint256 _index)
+		public
+		view
+		returns (string memory)
+	{
+		uint256 tokenId = tokenOfOwnerByIndex(_owner, _index);
+		return heroicNames[tokenId];
+	}
+
 	//only owner
 	function withdraw() public payable onlyOwner {
 		(bool success, ) = payable(msg.sender).call{

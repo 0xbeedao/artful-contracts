@@ -46,6 +46,21 @@ describe("HeroicNamer", function () {
 		expect(unique.size).to.equal(50);
 	});
 
+	it("Should retrieve names", async function () {
+		const names = [];
+		for (let i = 0; i < 10; i++) {
+			const tx = await namer.connect(addr1).mint();
+			const rv = await tx.wait();
+			const { name, tokenId } = getNamingEvent(rv.events).args;
+			names.push(name);
+			console.log(`name ${i} [#${tokenId}]: ${name}`);
+		}
+		for (let i = 0; i < 10; i++) {
+			const name = await namer.nameOfOwnerByIndex(addr1, i);
+			expect(name).to.equal(names[i]);
+		}
+	});
+
 	it("Should render SVG for tokenURI", async function () {
 		const tx = await namer.connect(addr1).mint();
 		const rv = await tx.wait();

@@ -22,7 +22,21 @@ const NETWORK_NAMES: Record<string, string> = {
 	hardhat: "Hardhat",
 };
 
-const PK = (process.env.DEV_WALLET = process.env.DEV_WALLET || "0x0");
+const PK = process.env.DEV_WALLET ?? "0x0";
+const GANACHE_PK = process.env.GANACHE_PK ?? "0x0";
+
+async function deployPricedContract(
+	contractName: string,
+	price: number,
+	hre: any
+) {
+	if (price === undefined) {
+		throw new Error("Need a price for the dealer");
+	}
+	const dealer = await hre.ethers.getContractFactory(contractName);
+	const bigPrice = hre.ethers.utils.parseEther(price);
+	return dealer.deploy(bigPrice);
+}
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 	const accounts = await hre.ethers.getSigners();
@@ -53,7 +67,10 @@ task("balance", "Prints an account's balance")
 	});
 
 task("deploy", "Deploys the contract")
-	.addParam("name", "The contract to deploy [beeminter, dealer]")
+	.addParam(
+		"name",
+		"The contract to deploy [beeminter, TarotNFTDeck, TarotTitledDealer, CardDealer, HeroicNamer]"
+	)
 	.addParam("cid", "The CID of the metadata directory")
 	.addParam("price", "The price of the contract")
 	.setAction(async (taskArgs, hre) => {
@@ -72,7 +89,7 @@ task("deploy", "Deploys the contract")
 				deployed = await minter.deploy("ArtfulOne", "BEE", cid);
 				break;
 			}
-			case "dealer": {
+			case "TarotNFTDeck": {
 				if (price === undefined) {
 					throw new Error("Need a price for the dealer");
 				}
@@ -90,9 +107,16 @@ task("deploy", "Deploys the contract")
 				);
 				break;
 			}
-			default: {
+			case "TarotTitledDealer":
+			// fallthrough
+			case "CardDealer":
+			// fallthrough
+			case "HeroicNamer":
+				deployed = await deployPricedContract(name, price, hre);
+				break;
+			default:
 				console.error(`Unknown contract name: ${name}`);
-			}
+				break;
 		}
 
 		if (!deployed) {
@@ -229,6 +253,13 @@ task("token-uri", "Gets URI by token ID")
 const config: HardhatUserConfig = {
 	solidity: "0.8.11",
 	networks: {
+		ganache: {
+			url: "http://127.0.0.1:8545",
+			accounts: [GANACHE_PK],
+		},
+		hardhat: {
+			chainId: 1337,
+		},
 		ropsten: {
 			url: process.env.ROPSTEN_URL || "",
 			accounts: [PK],
