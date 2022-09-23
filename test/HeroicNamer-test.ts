@@ -48,6 +48,7 @@ describe("HeroicNamer", function () {
 
 	it("Should retrieve names", async function () {
 		const names = [];
+		const startCt = await namer.totalSupply();
 		for (let i = 0; i < 10; i++) {
 			const tx = await namer.connect(addr1).mint();
 			const rv = await tx.wait();
@@ -55,8 +56,10 @@ describe("HeroicNamer", function () {
 			names.push(name);
 			console.log(`name ${i} [#${tokenId}]: ${name}`);
 		}
-		for (let i = 0; i < 10; i++) {
-			const name = await namer.nameOfOwnerByIndex(addr1, i);
+		const endCt = await namer.totalSupply();
+		expect(endCt - startCt).to.equal(10);
+		for (let i = 1; i < 11; i++) {
+			const name = await namer.nameOfOwnerByIndex(addr1, i + startCt);
 			expect(name).to.equal(names[i]);
 		}
 	});
@@ -76,5 +79,28 @@ describe("HeroicNamer", function () {
 		expect(json.image).to.match(/^data:image\/svg\+xml;base64/);
 		const rawSvg = Buffer.from(json.image.split(",")[1], "base64").toString();
 		expect(rawSvg).to.match(/^<svg/);
+	});
+
+	it("Should burn tokens", async function () {
+		const startCt = await namer.totalSupply();
+		const tokens = [];
+		const names = [];
+		for (let i = 0; i < 4; i++) {
+			const tx = await namer.connect(addr1).mint();
+			const rv = await tx.wait();
+			const { name, tokenId } = getNamingEvent(rv.events).args;
+			names.push(name);
+			tokens.push(tokenId);
+			console.log(`name ${i} [#${tokenId}]: ${name}`);
+		}
+		const delTx = await namer.connect(addr1).burn(tokens[1]);
+		await delTx.wait();
+
+		const finalNames = [];
+		for (let i = 1; i < 4; i++) {
+			const name = await namer.nameOfOwnerByIndex(addr1, startCt + i);
+			finalNames.push(name);
+		}
+		expect(finalNames).to.deep.equal([names[0], names[2], names[3]]);
 	});
 });

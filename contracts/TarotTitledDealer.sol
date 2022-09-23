@@ -1,7 +1,7 @@
 pragma solidity 0.8.11;
 
 // SPDX-License-Identifier: CC-BY-3.0-US
-// @author 0xBigBee <0xbigbee@protonmail.com>
+// @author BruceDev <0xbigbee@protonmail.com>
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";

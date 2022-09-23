@@ -1,3 +1,8 @@
+/**
+A fun little contract to give yourself a heroic name.
+// SPDX-License-Identifier: CC-BY-3.0-US
+// @author BruceDev <0xbigbee@protonmail.com>
+*/
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -551,6 +556,38 @@ contract HeroicNamer is ERC721Enumerable, Ownable, PseudoRandomized {
 		PseudoRandomized()
 	{
 		price = cost;
+	}
+
+	function _beforeTokenTransfer(
+		address from,
+		address to,
+		uint256 tokenId
+	) internal virtual override {
+		super._beforeTokenTransfer(from, to, tokenId);
+		if (from != address(0)) {
+			address owner = ownerOf(tokenId);
+			require(
+				owner == msg.sender,
+				"Only the owner of NFT can transfer or burn it"
+			);
+		}
+	}
+
+	function _afterTokenTransfer(
+		address from,
+		address to,
+		uint256 tokenId
+	) internal virtual override {
+		super._afterTokenTransfer(from, to, tokenId);
+		if (to == address(0)) {
+			// burn - remove from heroic names
+			delete heroicNames[tokenId];
+		}
+	}
+
+	function burn(uint256 tokenId) public {
+		super._burn(tokenId);
+		delete heroicNames[tokenId];
 	}
 
 	function nextRandom(uint256 seed, uint256 delta)
