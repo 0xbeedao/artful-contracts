@@ -250,12 +250,24 @@ task("token-uri", "Gets URI by token ID")
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
-const config: HardhatUserConfig = {
+const deployerAccount = `0x${process.env.NFT_DEPLOYER_WALLET || ""}`;
+console.log("deployer", deployerAccount);
+
+const config: any = {
 	solidity: "0.8.11",
 	networks: {
+		evmos: {
+			url: "https://evmos-json-rpc.stakely.io",
+			chainId: 9001,
+			accounts: [deployerAccount],
+		},
 		ganache: {
 			url: "http://127.0.0.1:8545",
 			accounts: [GANACHE_PK],
+		},
+		xdai: {
+			url: "https://rpc.ankr.com/gnosis",
+			accounts: [deployerAccount],
 		},
 		hardhat: {
 			chainId: 1337,
@@ -279,6 +291,16 @@ const config: HardhatUserConfig = {
 	},
 	etherscan: {
 		apiKey: process.env.POLYGONSCAN_API_KEY,
+		customChains: [
+			{
+				network: "evmos",
+				chainId: 9001,
+				urls: {
+					apiURL: "https://evm.evmos.org/api",
+					browserURL: "https://evm.evmos.org",
+				},
+			},
+		],
 	},
 	typechain: {
 		outDir: "./artifacts/types",
